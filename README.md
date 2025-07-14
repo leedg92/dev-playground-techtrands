@@ -1,6 +1,5 @@
 # dev-playground-techtrands
 
-# HackerNews Tech Trends Analysis
 > 개발 기술 트렌드 실시간 분석 대시보드 - ELK 스택과 머신러닝을 활용한 기술 동향 추적 시스템
 
 ## 📋 프로젝트 개요
