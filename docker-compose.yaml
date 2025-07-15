@@ -1,0 +1,19 @@
+# =============================================================================
+# HackerNews Tech Trends Analysis - Docker Compose Configuration
+# Apache Airflow 2.11.0 기반 모듈형 구조
+# =============================================================================
+
+# 🎯 모듈형 구조: compose/ 폴더의 개별 설정 파일들을 include
+include:
+  - compose/database.yaml    # PostgreSQL & Redis 설정
+  - compose/airflow.yaml     # Airflow 서비스 설정
+
+# 🔧 전역 볼륨 설정
+volumes:
+  postgres-db-volume:
+    driver: local
+
+# 📋 네트워크 설정 (선택사항)
+networks:
+  default:
+    name: techtrends-network
