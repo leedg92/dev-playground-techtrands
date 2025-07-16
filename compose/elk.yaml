@@ -1,0 +1,50 @@
+services:
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    environment:
+      - discovery.type=single-node
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - xpack.security.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+      - ../elasticsearch/templates:/usr/share/elasticsearch/templates
+    ports:
+      - "9200:9200"
+    networks:
+      - techtrends-network
+
+  logstash:
+    build:
+      context: ..
+      dockerfile: logstashfile
+    env_file:
+      - ../.env
+    volumes:
+      - ../logstash/pipeline:/usr/share/logstash/pipeline
+    ports:
+      - "5044:5044"
+    networks:
+      - techtrends-network
+    depends_on:
+      - elasticsearch
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.13.4
+    ports:
+      - "8010:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - ELASTICSEARCH_USERNAME=
+      - ELASTICSEARCH_PASSWORD=
+    networks:
+      - techtrends-network
+    depends_on:
+      - elasticsearch
+
+volumes:
+  es-data:
+
+networks:
+  techtrends-network:
+    external: true

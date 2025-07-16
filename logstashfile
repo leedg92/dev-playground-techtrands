@@ -1,0 +1,4 @@
+FROM docker.elastic.co/logstash/logstash:8.13.4
+
+# PostgreSQL JDBC 드라이버 다운로드
+RUN curl -L -o /usr/share/logstash/postgresql-42.7.3.jar https://jdbc.postgresql.org/download/postgresql-42.7.3.jar

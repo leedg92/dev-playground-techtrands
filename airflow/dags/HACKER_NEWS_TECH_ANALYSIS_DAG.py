@@ -10,6 +10,8 @@ import concurrent.futures
 import html
 import re
 
+import os
+
 # 자연어 처리 라이브러리 추가
 import spacy
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -412,7 +414,7 @@ def process_sentiment_and_keywords(**context):
             'text_content': story['text'] if story['text'] and story['text'] != 'None' and story['text'].strip() else story['title'],
             'sentiment_score': analysis_result['sentiment']['compound'],
             'sentiment_label': analysis_result['sentiment']['label'],
-            'extracted_keywords': json.dumps({kw: score for kw, score in analysis_result['keyword_scores'].items() if kw.lower() in ALL_TECH_KEYWORDS}),
+            'extracted_keywords': next((kw for kw, score in analysis_result['keyword_scores'].items() if kw.lower() in ALL_TECH_KEYWORDS), ''),
             'author': story['author'],
             'created_at': datetime.now(),
             'score': story['score'],
@@ -473,11 +475,11 @@ def insert_tech_trends_data(**context):
     print("\n🔌 PostgreSQL DB 연결 시도...")
     try:
         conn = connect(
-            host='postgres',
-            database='tech_trends',
-            user='techtrends', 
-            password='techtrends123!',
-            port=5432
+            host=os.environ['HOST'],
+            database=os.environ['DATABASE'],
+            user=os.environ['USER'], 
+            password=os.environ['PASSWORD'],
+            port=os.environ['PORT']
         )
         print("✅ DB 연결 성공!")
         
@@ -578,7 +580,7 @@ dag = DAG(
     'HACKER_NEWS_TECH_ANALYSIS_DAG',
     default_args=default_args,
     description='Hacker News 기술 트렌드 감성분석 및 키워드 추출 DAG (기술 게시글 필터링)',
-    schedule_interval='0 * * * *',  # 1시간에 한번씩 실행
+    schedule_interval='*/20 * * * *',  # 20분에 한번씩 실행
     catchup=False
 )
 

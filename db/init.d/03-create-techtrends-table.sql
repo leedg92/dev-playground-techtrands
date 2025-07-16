@@ -3,53 +3,20 @@
 -- ========================================
 
 -- 데이터베이스 사용
-USE `techtrends`;
+USE `tech_trends`;
 
 
-CREATE TABLE tech_trends_items (
-    id BIGINT PRIMARY KEY,                  -- HN 아이템 ID
-    item_type VARCHAR(20),                  -- 'story' or 'comment'
-    text_content TEXT,                      -- 분석할 텍스트 (제목+본문)
-    
-    -- 감성분석 결과
-    sentiment_score FLOAT,                  -- compound 점수 (-1 ~ 1)
-    sentiment_label VARCHAR(20),            -- positive/negative/neutral
-    
-    -- 키워드 분석 결과 (JSON 형식)
-    extracted_keywords JSONB,               -- {"keyword": score, ...}
-    
-    -- 메타데이터
-    author VARCHAR(50),                     -- 작성자
-    created_at TIMESTAMP,                   -- 작성시간
-    score INTEGER,                          -- HN 점수
-    
-    -- 컨텍스트 (필요시)
-    parent_id BIGINT,                       -- 댓글인 경우 부모 ID
-    root_story_id BIGINT                    -- 최상위 스토리 ID
+CREATE TABLE IF NOT EXISTS tech_trends.tech_trends_items (
+	id int4 NOT NULL,
+	item_type varchar(20) NULL,
+	text_content text NULL,
+	sentiment_score float8 NULL,
+	sentiment_label varchar(20) NULL,
+	extracted_keywords varchar(100) NULL,
+	author varchar(50) NULL,
+	created_at timestamp NULL,
+	score int4 NULL,
+	parent_id int8 NULL,
+	root_story_id int8 NULL,
+	CONSTRAINT tech_trends_items_pkey PRIMARY KEY (id)
 );
-
-
--- 데이터베이스 구조 및 데이터 저장 방법
-
--- 1. 테이블 구조:
--- CREATE TABLE content_items (
---     id BIGINT PRIMARY KEY,                  -- HN 아이템 ID
---     item_type VARCHAR(20),                  -- 'story' or 'comment'
---     text_content TEXT,                      -- 분석할 텍스트 (제목+본문)
-    
---     -- 감성분석 결과
---     sentiment_score FLOAT,                  -- compound 점수 (-1 ~ 1)
---     sentiment_label VARCHAR(20),            -- positive/negative/neutral
-    
---     -- 키워드 분석 결과 (JSON 형식)
---     extracted_keywords JSONB,               -- {"keyword": score, ...}
-    
---     -- 메타데이터
---     author VARCHAR(50),                     -- 작성자
---     created_at TIMESTAMP,                   -- 작성시간
---     score INTEGER,                          -- HN 점수
-    
---     -- 컨텍스트 (필요시)
---     parent_id BIGINT,                       -- 댓글인 경우 부모 ID
---     root_story_id BIGINT                    -- 최상위 스토리 ID
--- );
