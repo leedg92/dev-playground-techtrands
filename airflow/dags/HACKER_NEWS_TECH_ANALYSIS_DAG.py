@@ -32,52 +32,20 @@ analyzer = SentimentIntensityAnalyzer()
 # 기술 키워드 사전 (HackerNews에서 자주 언급되는 기술 용어들)
 ALL_TECH_KEYWORDS = set()  # 모든 기술 키워드를 하나의 set으로 관리
 
-tech_categories = {
-    'languages': [
-        'python', 'javascript', 'js', 'typescript', 'ts', 'rust', 'go', 'golang', 
-        'java', 'cpp', 'c++', 'kotlin', 'swift', 'php', 'ruby', 'scala', 
-        'clojure', 'haskell', 'dart', 'elm', 'elixir', 'perl', 'r', 'julia'
-    ],
-    'frameworks': [
-        'react', 'vue', 'angular', 'django', 'rails', 'express', 'spring', 
-        'laravel', 'flask', 'fastapi', 'nextjs', 'nuxt', 'svelte', 'ember',
-        'backbone', 'jquery', 'bootstrap', 'tailwind', 'mui', 'chakra'
-    ],
-    'tools': [
-        'docker', 'kubernetes', 'k8s', 'git', 'github', 'gitlab', 'nginx', 
-        'apache', 'redis', 'postgresql', 'postgres', 'mysql', 'mongodb', 
-        'elasticsearch', 'kafka', 'jenkins', 'terraform', 'ansible', 'webpack',
-        'vite', 'babel', 'eslint', 'prettier', 'jest', 'cypress', 'selenium'
-    ],
-    'platforms': [
-        'aws', 'azure', 'gcp', 'vercel', 'heroku', 'digitalocean', 'netlify',
-        'cloudflare', 'firebase', 'supabase', 'planetscale', 'railway'
-    ],
-    'concepts': [
-        'api', 'rest', 'graphql', 'grpc', 'microservices', 'serverless', 
-        'blockchain', 'cryptocurrency', 'bitcoin', 'ethereum', 'nft',
-        'machine learning', 'ml', 'ai', 'artificial intelligence', 'llm',
-        'deep learning', 'neural network', 'devops', 'cicd', 'sre',
-        'cloud', 'saas', 'paas', 'iaas', 'orm', 'sql', 'nosql'
-    ],
-    'web': [
-        'html', 'css', 'sass', 'scss', 'less', 'json', 'xml', 'yaml',
-        'http', 'https', 'websocket', 'pwa', 'spa', 'ssr', 'ssg',
-        'cms', 'headless', 'jamstack', 'cdn', 'dom', 'virtual dom'
-    ]
-}
-
-# 모든 기술 키워드를 하나의 set으로 통합
-for category in tech_categories.values():
-    ALL_TECH_KEYWORDS.update([kw.lower() for kw in category])
 
 """
-1. 최근 게시글 목록 가져오기
-2. 최근 게시글 목록 중 처리되지 않은 게시글 목록 추출
-3. 처리되지 않은 게시글 목록 상세정보 수집 (XCom으로 전달)
-4. 감성분석, 키워드 추출 (기술 키워드 우선)
-5. 감성분석, 키워드 추출 결과 출력 (현재는 print만)
+1. Github api를 통해 최신 키워드 목록 가져와서 저장 (프로그래밍 언어, 프레임워크)
+2. 모든 기술 키워드를 하나의 set으로 통합
+3. 최근 게시글 목록 가져오기
+4. 최근 게시글 목록 중 처리되지 않은 게시글 목록 추출
+5. 처리되지 않은 게시글 목록 상세정보 수집 (XCom으로 전달)
+6. 감성분석, 키워드 추출 (기술 키워드 우선)
+7. 감성분석, 키워드 추출 결과 출력
+8. 감성분석, 키워드 추출 결과를 데이터베이스에 저장
 """
+
+    
+
 
 # 텍스트 전처리 함수 (HTML 디코딩 및 정리)
 def clean_text(text):
@@ -101,6 +69,99 @@ def clean_text(text):
     text = re.sub(r'\s+', ' ', text).strip()
     
     return text
+
+def update_latest_keywords():
+    try:
+        conn = connect(
+            host=os.environ['HOST'],
+            database=os.environ['DATABASE'],
+            user=os.environ['USER'], 
+            password=os.environ['PASSWORD'],
+            port=os.environ['PORT']
+        )
+        print("✅ DB 연결 성공!")
+        
+        cur = conn.cursor()
+        print("📝 커서 생성 완료")
+
+        language_list = []
+        language_response = requests.get(f'https://api.github.com/search/repositories?q=stars:>1000+pushed:>{datetime.now().strftime("%Y-%m-%d")}&sort=stars&per_page=10000')
+
+        language_data = language_response.json()
+        for repo in language_data['items']:
+            if repo['language']:
+                language_list.append(repo['language'].lower())
+        for language in language_list:
+            insert_query = """
+            INSERT INTO tech_trends.tech_dictionary (keyword, category) VALUES (%s, 'language')
+            ON CONFLICT (keyword) DO NOTHING
+            """
+            cur.execute(insert_query, (language,))
+            print(f"💾 프로그래밍 언어 데이터 저장 완료: {language}")
+
+        framework_list = []
+        framework_response = requests.get(f'https://api.github.com/search/topics?q=framework+OR+library&sort=repositories&per_page=10000')
+
+        framework_data = framework_response.json()
+        for repo in framework_data['items']:
+            if repo['name']:
+                framework_list.append(repo['name'].lower())
+        for framework in framework_list:
+            insert_query = """
+            INSERT INTO tech_trends.tech_dictionary (keyword, category) VALUES (%s, 'framework')
+            ON CONFLICT (keyword) DO NOTHING
+            """
+            cur.execute(insert_query, (framework,))
+            print(f"💾 프레임워크 데이터 저장 완료: {framework}")
+            
+            # 커밋
+            conn.commit()
+            print("✅ 트랜잭션 커밋 완료")
+            
+    except Exception as e:
+        print(f"❌ 오류 발생: {str(e)}")
+        raise e
+        
+    finally:
+        # 연결 종료
+        if cur:
+            cur.close()
+            print("\n🔄 DB 커서 종료")
+        if conn:
+            conn.close() 
+            print("🔌 DB 연결 종료")
+
+# 모든 기술 키워드를 하나의 set으로 통합
+def set_all_tech_keywords():
+    try:
+        conn = connect(
+            host=os.environ['HOST'],
+            database=os.environ['DATABASE'],
+            user=os.environ['USER'], 
+            password=os.environ['PASSWORD'],
+            port=os.environ['PORT']
+        )
+        print("✅ DB 연결 성공!")
+        
+        cur = conn.cursor()
+        print("📝 커서 생성 완료")
+        
+        select_query = """
+        SELECT keyword FROM tech_trends.tech_dictionary
+        """
+        cur.execute(select_query)
+        all_tech_keywords = cur.fetchall()
+        for keyword in all_tech_keywords:
+            ALL_TECH_KEYWORDS.add(keyword[0].lower())
+        print(f"🔍 모든 기술 키워드 세팅 완료: {len(ALL_TECH_KEYWORDS)}개")
+    except Exception as e:
+        print(f"❌ 오류 발생: {str(e)}")
+        raise e
+    finally:
+        if cur:
+            cur.close()
+            print("\n🔄 DB 커서 종료")  
+
 
 # 최근 게시글 목록 가져오기
 def get_new_story_ids():
@@ -585,37 +646,50 @@ dag = DAG(
 )
 
 # Task 정의
+# 1단계: 최신 키워드 업데이트
+update_latest_keywords_task = PythonOperator(
+    task_id='update_latest_keywords',
+    python_callable=update_latest_keywords,
+    dag=dag
+)
 
-# 1단계: 새로운 게시글 ID 수집
+# 2단계: 모든 기술 키워드 세팅
+set_all_tech_keywords_task = PythonOperator(
+    task_id='set_all_tech_keywords',
+    python_callable=set_all_tech_keywords,
+    dag=dag
+)
+
+# 3단계: 새로운 게시글 ID 수집
 new_story_ids_task = PythonOperator(
     task_id='get_new_story_ids',
     python_callable=get_new_story_ids,
     dag=dag
 )
 
-# 2단계: 게시글 상세정보 수집
+# 4단계: 게시글 상세정보 수집
 story_detail_task = PythonOperator(
     task_id='get_story_detail',
     python_callable=get_story_detail,
     dag=dag
 )
 
-# 3단계: 기술 게시글 필터링 및 분석
+# 5단계: 기술 게시글 필터링 및 분석
 analysis_task = PythonOperator(
     task_id='process_sentiment_and_keywords',
     python_callable=process_sentiment_and_keywords,
     dag=dag
 )
 
-# 4단계: 데이터베이스에 저장
+# 6단계: 데이터베이스에 저장
 insert_tech_trends_data_task = PythonOperator(
     task_id='insert_tech_trends_data',
     python_callable=insert_tech_trends_data,
     dag=dag
 )
 
-# Task 실행 순서 정의 (1단계 → 2단계 → 3단계)
-new_story_ids_task >> story_detail_task >> analysis_task >> insert_tech_trends_data_task
+# Task 실행 순서 정의 (1단계 → 2단계 → 3단계 → 4단계 → 5단계)
+update_latest_keywords_task >> set_all_tech_keywords_task >> new_story_ids_task >> story_detail_task >> analysis_task >> insert_tech_trends_data_task
 
 
 # 2. 데이터 저장 예시:

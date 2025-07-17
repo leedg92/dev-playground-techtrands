@@ -20,3 +20,10 @@ CREATE TABLE IF NOT EXISTS tech_trends.tech_trends_items (
 	root_story_id int8 NULL,
 	CONSTRAINT tech_trends_items_pkey PRIMARY KEY (id)
 );
+
+create table if not exists tech_trends.tech_dictionary (
+	keyword varchar(100) NOT NULL,
+	category varchar(100) CHECK (category IN ('language','framework','tool','platform','concept')) NOT NULL,
+	use_yn varchar(1) default 'Y',
+	CONSTRAINT tech_dictionary_pkey PRIMARY KEY (keyword)
+);

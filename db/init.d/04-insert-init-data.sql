@@ -1,4 +1,4 @@
--- 초기 데이터 삽입
+-- 초기 해커뉴스 감성분석 데이터 삽입
 INSERT INTO tech_trends.tech_trends_items (id,item_type,text_content,sentiment_score,sentiment_label,extracted_keywords,author,created_at,score,parent_id,root_story_id) VALUES
 	 (44586233,'story','Scale AI cuts 14% of workforce after Meta investment, hiring of founder Wang',-0.296,'negative','ai','itg','2025-07-16 20:32:12.123',1,NULL,0),
 	 (44586242,'story','Brave Search API Listed in AWS Marketplace',0.5267,'positive','api','w0ts0n','2025-07-16 20:32:12.133',1,NULL,0),
@@ -48,3 +48,51 @@ That’s it. Now your users can literally talk to your app and it will:<p>Click 
 	 (44587388,'comment','<a href="https:&#x2F;&#x2F;archive.ph&#x2F;cMLNo" rel="nofollow">https:&#x2F;&#x2F;archive.ph&#x2F;cMLNo</a>',0.0,'neutral','https','richardatlarge','2025-07-16 22:26:35.328',0,44587381,0);
 INSERT INTO tech_trends.tech_trends_items (id,item_type,text_content,sentiment_score,sentiment_label,extracted_keywords,author,created_at,score,parent_id,root_story_id) VALUES
 	 (44587423,'story','Could AI slow science? Confronting the production-progress paradox',-0.25,'negative','ai','randomwalker','2025-07-16 22:26:35.349',1,NULL,0);
+
+
+--초기 사전 데이터 삽입
+INSERT INTO tech_trends.tech_dictionary (keyword,category) VALUES
+	 ('python','language'),
+	 ('javascript','language'), 
+	 ('js','language'),
+	 ('typescript','language'),
+	 ('ts','language'),
+	 ('rust','language'),
+	 ('go','language'),
+	 ('golang','language'),
+	 ('java','language'),
+	 ('cpp','language'),
+	 ('c++','language'),
+	 ('kotlin','language'),
+	 ('swift','language'),
+	 ('php','language'),
+	 ('ruby','language'),
+	 ('scala','language'),
+	 ('clojure','language'),
+	 ('haskell','language'),
+	 ('dart','language'),
+	 ('elm','language'),
+	 ('elixir','language'),
+	 ('perl','language'),
+	 ('r','language'),
+	 ('julia','language'),
+	 ('react','framework'),
+	 ('vue','framework'),
+	 ('angular','framework'),
+	 ('django','framework'),
+	 ('rails','framework'),
+	 ('express','framework'),
+	 ('spring','framework'),
+	 ('laravel','framework'),
+	 ('flask','framework'),
+	 ('fastapi','framework'),
+	 ('nextjs','framework'),
+	 ('nuxt','framework'),
+	 ('svelte','framework'),
+	 ('ember','framework'),
+	 ('backbone','framework'),
+	 ('jquery','framework'),
+	 ('bootstrap','framework'),
+	 ('tailwind','framework'),
+	 ('mui','framework'),
+	 ('chakra','framework');
