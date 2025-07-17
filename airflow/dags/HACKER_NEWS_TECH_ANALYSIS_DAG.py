@@ -9,7 +9,7 @@ import json
 import concurrent.futures
 import html
 import re
-
+import time
 import os
 
 # 자연어 처리 라이브러리 추가
@@ -23,7 +23,6 @@ from psycopg2 import connect
 from psycopg2.extras import execute_values
 from psycopg2.extensions import adapt
 from psycopg2.extensions import register_adapter
-from psycopg2.extensions import register_adapter
 
 # spaCy 모델 및 VADER 감성분석기 초기화 (전역변수로 한번만 로드)
 nlp = spacy.load("en_core_web_sm")  # pip install en_core_web_sm 필요
@@ -34,14 +33,14 @@ ALL_TECH_KEYWORDS = set()  # 모든 기술 키워드를 하나의 set으로 관�
 
 
 """
-1. Github api를 통해 최신 키워드 목록 가져와서 저장 (프로그래밍 언어, 프레임워크)
-2. 모든 기술 키워드를 하나의 set으로 통합
-3. 최근 게시글 목록 가져오기
-4. 최근 게시글 목록 중 처리되지 않은 게시글 목록 추출
-5. 처리되지 않은 게시글 목록 상세정보 수집 (XCom으로 전달)
-6. 감성분석, 키워드 추출 (기술 키워드 우선)
-7. 감성분석, 키워드 추출 결과 출력
-8. 감성분석, 키워드 추출 결과를 데이터베이스에 저장
+
+1. 모든 기술 키워드를 하나의 set으로 통합
+2. 최근 게시글 목록 가져오기
+3. 최근 게시글 목록 중 처리되지 않은 게시글 목록 추출
+4. 처리되지 않은 게시글 목록 상세정보 수집 (XCom으로 전달)
+5. 감성분석, 키워드 추출 (기술 키워드 우선)
+6. 감성분석, 키워드 추출 결과 출력
+7. 감성분석, 키워드 추출 결과를 데이터베이스에 저장
 """
 
     
@@ -70,66 +69,6 @@ def clean_text(text):
     
     return text
 
-def update_latest_keywords():
-    try:
-        conn = connect(
-            host=os.environ['HOST'],
-            database=os.environ['DATABASE'],
-            user=os.environ['USER'], 
-            password=os.environ['PASSWORD'],
-            port=os.environ['PORT']
-        )
-        print("✅ DB 연결 성공!")
-        
-        cur = conn.cursor()
-        print("📝 커서 생성 완료")
-
-        language_list = []
-        language_response = requests.get(f'https://api.github.com/search/repositories?q=stars:>1000+pushed:>{datetime.now().strftime("%Y-%m-%d")}&sort=stars&per_page=10000')
-
-        language_data = language_response.json()
-        for repo in language_data['items']:
-            if repo['language']:
-                language_list.append(repo['language'].lower())
-        for language in language_list:
-            insert_query = """
-            INSERT INTO tech_trends.tech_dictionary (keyword, category) VALUES (%s, 'language')
-            ON CONFLICT (keyword) DO NOTHING
-            """
-            cur.execute(insert_query, (language,))
-            print(f"💾 프로그래밍 언어 데이터 저장 완료: {language}")
-
-        framework_list = []
-        framework_response = requests.get(f'https://api.github.com/search/repositories?q=topic:framework+stars:>5000+pushed:>{datetime.now().strftime("%Y-%m-%d")}&sort=stars&per_page=10000')
-
-        framework_data = framework_response.json()
-        for repo in framework_data['items']:
-            if repo['name']:
-                framework_list.append(repo['name'].lower())
-        for framework in framework_list:
-            insert_query = """
-            INSERT INTO tech_trends.tech_dictionary (keyword, category) VALUES (%s, 'framework')
-            ON CONFLICT (keyword) DO NOTHING
-            """
-            cur.execute(insert_query, (framework,))
-            print(f"💾 프레임워크 데이터 저장 완료: {framework}")
-            
-            # 커밋
-            conn.commit()
-            print("✅ 트랜잭션 커밋 완료")
-            
-    except Exception as e:
-        print(f"❌ 오류 발생: {str(e)}")
-        raise e
-        
-    finally:
-        # 연결 종료
-        if cur:
-            cur.close()
-            print("\n🔄 DB 커서 종료")
-        if conn:
-            conn.close() 
-            print("🔌 DB 연결 종료")
 
 # 모든 기술 키워드를 하나의 set으로 통합
 def set_all_tech_keywords():
@@ -160,7 +99,8 @@ def set_all_tech_keywords():
     finally:
         if cur:
             cur.close()
-            print("\n🔄 DB 커서 종료")  
+            print("\n🔄 DB 커서 종료") 
+            print(ALL_TECH_KEYWORDS) 
 
 
 # 최근 게시글 목록 가져오기
@@ -641,47 +581,41 @@ dag = DAG(
     'HACKER_NEWS_TECH_ANALYSIS_DAG',
     default_args=default_args,
     description='Hacker News 기술 트렌드 감성분석 및 키워드 추출 DAG (기술 게시글 필터링)',
-    schedule_interval='*/20 * * * *',  # 20분에 한번씩 실행
+    schedule_interval='*/30 * * * *',  # 20분에 한번씩 실행
     catchup=False
 )
 
-# Task 정의
-# 1단계: 최신 키워드 업데이트
-update_latest_keywords_task = PythonOperator(
-    task_id='update_latest_keywords',
-    python_callable=update_latest_keywords,
-    dag=dag
-)
 
-# 2단계: 모든 기술 키워드 세팅
+
+# 1단계: 모든 기술 키워드 세팅
 set_all_tech_keywords_task = PythonOperator(
     task_id='set_all_tech_keywords',
     python_callable=set_all_tech_keywords,
     dag=dag
 )
 
-# 3단계: 새로운 게시글 ID 수집
+# 2단계: 새로운 게시글 ID 수집
 new_story_ids_task = PythonOperator(
     task_id='get_new_story_ids',
     python_callable=get_new_story_ids,
     dag=dag
 )
 
-# 4단계: 게시글 상세정보 수집
+# 3단계: 게시글 상세정보 수집
 story_detail_task = PythonOperator(
     task_id='get_story_detail',
     python_callable=get_story_detail,
     dag=dag
 )
 
-# 5단계: 기술 게시글 필터링 및 분석
+# 4단계: 기술 게시글 필터링 및 분석
 analysis_task = PythonOperator(
     task_id='process_sentiment_and_keywords',
     python_callable=process_sentiment_and_keywords,
     dag=dag
 )
 
-# 6단계: 데이터베이스에 저장
+# 5단계: 데이터베이스에 저장
 insert_tech_trends_data_task = PythonOperator(
     task_id='insert_tech_trends_data',
     python_callable=insert_tech_trends_data,
@@ -689,24 +623,4 @@ insert_tech_trends_data_task = PythonOperator(
 )
 
 # Task 실행 순서 정의 (1단계 → 2단계 → 3단계 → 4단계 → 5단계)
-update_latest_keywords_task >> set_all_tech_keywords_task >> new_story_ids_task >> story_detail_task >> analysis_task >> insert_tech_trends_data_task
-
-
-# 2. 데이터 저장 예시:
-# - story_data에서 필요한 정보 추출
-# - 감성분석/키워드 추출 결과를 JSON으로 변환
-# - SQL INSERT 또는 psycopg2/SQLAlchemy ORM 사용
-
-# INSERT INTO content_items VALUES (
-#     story_data['id'],
-#     'story',
-#     story_data['title'] || ' ' || story_data['text'],
-#     sentiment['compound'],
-#     sentiment['label'],
-#     json.dumps(keyword_scores),
-#     story_data['author'],
-#     datetime.fromtimestamp(story_data['time']),
-#     story_data['score'],
-#     NULL,
-#     NULL
-# );
+set_all_tech_keywords_task >> new_story_ids_task >> story_detail_task >> analysis_task >> insert_tech_trends_data_task
