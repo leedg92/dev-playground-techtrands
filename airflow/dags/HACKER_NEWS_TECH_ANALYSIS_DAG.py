@@ -100,7 +100,7 @@ def update_latest_keywords():
             print(f"💾 프로그래밍 언어 데이터 저장 완료: {language}")
 
         framework_list = []
-        framework_response = requests.get(f'https://api.github.com/search/topics?q=framework+OR+library&sort=repositories&per_page=10000')
+        framework_response = requests.get(f'https://api.github.com/search/repositories?q=topic:framework+stars:>5000+pushed:>{datetime.now().strftime("%Y-%m-%d")}&sort=stars&per_page=10000')
 
         framework_data = framework_response.json()
         for repo in framework_data['items']:
