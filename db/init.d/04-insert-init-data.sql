@@ -1,5 +1,5 @@
 -- 초기 해커뉴스 감성분석 데이터 삽입
-INSERT INTO tech_trends.tech_trends_items (id,item_type,text_content,sentiment_score,sentiment_label,extracted_keywords,author,created_at,score,parent_id,root_story_id) VALUES
+INSERT INTO tech_trends.tech_trends_items (id,item_type,text_content,sentiment_score,sentiment_label,extracted_keyword,author,created_at,score,parent_id,root_story_id) VALUES
 	 (44586233,'story','Scale AI cuts 14% of workforce after Meta investment, hiring of founder Wang',-0.296,'negative','ai','itg','2025-07-16 20:32:12.123',1,NULL,0),
 	 (44586242,'story','Brave Search API Listed in AWS Marketplace',0.5267,'positive','api','w0ts0n','2025-07-16 20:32:12.133',1,NULL,0),
 	 (44586250,'story','AI Founder Became a Billionaire by Building ChatGPT for Doctors',0.0,'neutral','ai','andrewl','2025-07-16 20:32:12.165',1,NULL,0),
@@ -13,7 +13,7 @@ Step 1: Paste a link or type a fact
 Step 2: AI scans and compares data
 Step 3: Get a trust rating + explanation',0.5106,'positive','ai','debunkit_ai','2025-07-16 20:32:12.311',1,NULL,0),
 	 (44565044,'story','Variadic Generics ideas that won''t work for Rust',0.5719,'positive','rust','PaulHoule','2025-07-16 20:39:56.135',4,NULL,0);
-INSERT INTO tech_trends.tech_trends_items (id,item_type,text_content,sentiment_score,sentiment_label,extracted_keywords,author,created_at,score,parent_id,root_story_id) VALUES
+INSERT INTO tech_trends.tech_trends_items (id,item_type,text_content,sentiment_score,sentiment_label,extracted_keyword,author,created_at,score,parent_id,root_story_id) VALUES
 	 (44586557,'comment','[delayed]',-0.2263,'negative','ai','theamk','2025-07-16 20:39:56.167',0,44586521,0),
 	 (44586521,'story','Manual vs. CNC machining as an analogy for manual vs. AI coding',0.0,'neutral','ai','actinium226','2025-07-16 20:39:56.176',1,NULL,0),
 	 (44586530,'story','Metaflow: Build, Manage and Deploy AI/ML Systems',0.0,'neutral','ai','plokker','2025-07-16 20:39:56.184',1,NULL,0),
@@ -29,7 +29,7 @@ Thanks for taking a look—happy to discuss and answer questions!<p>~ Maida.AI t
 	 (44586905,'comment','Non-paywall: <a href="https:&#x2F;&#x2F;archive.ph&#x2F;v9UjJ" rel="nofollow">https:&#x2F;&#x2F;archive.ph&#x2F;v9UjJ</a>',0.0,'neutral','bitcoin','alexcos','2025-07-16 21:27:48.303',0,44586897,0),
 	 (44586897,'story','Cantor Fitzgerald close to $4B SPAC deal with Bitcoin pioneer(Adam Back)',0.0,'neutral','bitcoin','alexcos','2025-07-16 21:27:48.307',1,NULL,0),
 	 (44586927,'story','Context in LLMs and the Blockchain',0.0,'neutral','blockchain','jaypinho','2025-07-16 21:27:48.311',1,NULL,0);
-INSERT INTO tech_trends.tech_trends_items (id,item_type,text_content,sentiment_score,sentiment_label,extracted_keywords,author,created_at,score,parent_id,root_story_id) VALUES
+INSERT INTO tech_trends.tech_trends_items (id,item_type,text_content,sentiment_score,sentiment_label,extracted_keyword,author,created_at,score,parent_id,root_story_id) VALUES
 	 (44586938,'comment','Rails is a one-person framework. But very few apps are one-person apps forever.<p>I’ve seen the same story unfold dozens of times:<p>One dev builds something useful.
 It ships. It grows.
 Then it outgrows them.<p>No docs.
@@ -46,7 +46,7 @@ No plan for what happens next.<p>If that sounds familiar… you’re not alone.'
 That’s it. Now your users can literally talk to your app and it will:<p>Click buttons and links<p>Fill out and submit forms<p>Navigate across screens<p>Answer questions with context<p>Trigger your own custom logic<p>Speak 60+ languages<p>And much more...<p>It reads the DOM. It understands what’s on the screen. It access tools, fetch info from a knowledge base and takes a sequence of action.<p>No training<p>No setup<p>No intent mapping<p>No lag<p>Test the agent live on our website <a href="https:&#x2F;&#x2F;smart.sista.ai&#x2F;" rel="nofollow">https:&#x2F;&#x2F;smart.sista.ai&#x2F;</a><p>To install it visit the docs <a href="https:&#x2F;&#x2F;docs.sista.ai&#x2F;" rel="nofollow">https:&#x2F;&#x2F;docs.sista.ai&#x2F;</a><p>Lastly, you wanna try it on your website without installing it yet! We got you covered with a browser extension.<p>Would love to hear your thoughts.',0.8519,'positive','ai','mahmoudzalt','2025-07-16 22:26:35.319',0,44587365,0),
 	 (44587365,'story','New AI agent that clicks, types, and responds – without any code changes',0.0,'neutral','ai','mahmoudzalt','2025-07-16 22:26:35.323',1,NULL,0),
 	 (44587388,'comment','<a href="https:&#x2F;&#x2F;archive.ph&#x2F;cMLNo" rel="nofollow">https:&#x2F;&#x2F;archive.ph&#x2F;cMLNo</a>',0.0,'neutral','https','richardatlarge','2025-07-16 22:26:35.328',0,44587381,0);
-INSERT INTO tech_trends.tech_trends_items (id,item_type,text_content,sentiment_score,sentiment_label,extracted_keywords,author,created_at,score,parent_id,root_story_id) VALUES
+INSERT INTO tech_trends.tech_trends_items (id,item_type,text_content,sentiment_score,sentiment_label,extracted_keyword,author,created_at,score,parent_id,root_story_id) VALUES
 	 (44587423,'story','Could AI slow science? Confronting the production-progress paradox',-0.25,'negative','ai','randomwalker','2025-07-16 22:26:35.349',1,NULL,0);
 
 

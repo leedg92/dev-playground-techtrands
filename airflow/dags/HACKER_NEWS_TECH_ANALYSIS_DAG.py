@@ -33,11 +33,10 @@ ALL_TECH_KEYWORDS = set()  # 모든 기술 키워드를 하나의 set으로 관�
 
 
 """
-
-1. 모든 기술 키워드를 하나의 set으로 통합
-2. 최근 게시글 목록 가져오기
-3. 최근 게시글 목록 중 처리되지 않은 게시글 목록 추출
-4. 처리되지 않은 게시글 목록 상세정보 수집 (XCom으로 전달)
+1. 최근 게시글 목록 가져오기
+2. 최근 게시글 목록 중 처리되지 않은 게시글 목록 추출
+3. 처리되지 않은 게시글 목록 상세정보 수집 (XCom으로 전달)
+4. 모든 기술 키워드를 하나의 set으로 통합
 5. 감성분석, 키워드 추출 (기술 키워드 우선)
 6. 감성분석, 키워드 추출 결과 출력
 7. 감성분석, 키워드 추출 결과를 데이터베이스에 저장
@@ -91,7 +90,7 @@ def set_all_tech_keywords():
         cur.execute(select_query)
         all_tech_keywords = cur.fetchall()
         for keyword in all_tech_keywords:
-            ALL_TECH_KEYWORDS.add(keyword[0].lower())
+            ALL_TECH_KEYWORDS.add(keyword[0].strip().lower())
         print(f"🔍 모든 기술 키워드 세팅 완료: {len(ALL_TECH_KEYWORDS)}개")
     except Exception as e:
         print(f"❌ 오류 발생: {str(e)}")
@@ -335,6 +334,9 @@ def process_sentiment_and_keywords(**context):
     XCom에서 게시글 데이터를 받아와서 감성분석과 키워드 추출 수행
     기술 키워드가 하나도 없는 게시글은 분석에서 배제
     """
+    print("🔍 기술 키워드 세팅 시작...")
+    set_all_tech_keywords()
+
     # XCom에서 이전 Task의 데이터 가져오기
     stories_data = context['ti'].xcom_pull(task_ids='get_story_detail')
     
@@ -372,6 +374,7 @@ def process_sentiment_and_keywords(**context):
         # 기술 키워드가 있는지 확인
         tech_keywords = []
         for kw, _ in keywords:
+            print(f"비교: '{kw.lower()}' in ALL_TECH_KEYWORDS? {kw.lower() in ALL_TECH_KEYWORDS}")
             if kw.lower() in ALL_TECH_KEYWORDS:
                 tech_keywords.append(kw)
         
@@ -409,19 +412,20 @@ def process_sentiment_and_keywords(**context):
         print(f"🔧 기술 키워드: {', '.join(tech_keywords)} ({len(tech_keywords)}개)")
         print(f"💭 감성: {analysis_result['sentiment']['label']} (점수: {analysis_result['sentiment']['compound']:.3f})")
         
-        tech_trends_data.append({
-            'id': story['id'],
-            'item_type': story['type'],
-            'text_content': story['text'] if story['text'] and story['text'] != 'None' and story['text'].strip() else story['title'],
-            'sentiment_score': analysis_result['sentiment']['compound'],
-            'sentiment_label': analysis_result['sentiment']['label'],
-            'extracted_keywords': next((kw for kw, score in analysis_result['keyword_scores'].items() if kw.lower() in ALL_TECH_KEYWORDS), ''),
-            'author': story['author'],
-            'created_at': datetime.now(),
-            'score': story['score'],
-            'parent_id': story['parent_id'],
-            'root_story_id': 0
-        })
+        for tech_keyword in tech_keywords:
+            tech_trends_data.append({
+                'id': story['id'],
+                'item_type': story['type'],
+                'text_content': story['text'] if story['text'] and story['text'] != 'None' and story['text'].strip() else story['title'],
+                'sentiment_score': analysis_result['sentiment']['compound'],
+                'sentiment_label': analysis_result['sentiment']['label'],
+                'extracted_keyword': tech_keyword,
+                'author': story['author'],
+                'created_at': datetime.now(),
+                'score': story['score'],
+                'parent_id': story['parent_id'],
+                'root_story_id': 0
+            })
 
         # 키워드별 중요도 점수 출력 (상위 4개만)
         if analysis_result['keyword_scores']:
@@ -495,7 +499,7 @@ def insert_tech_trends_data(**context):
             text_content, 
             sentiment_score, 
             sentiment_label,
-            extracted_keywords, 
+            extracted_keyword, 
             author, 
             created_at, 
             score, 
@@ -516,7 +520,7 @@ def insert_tech_trends_data(**context):
                 item['text_content'],
                 item['sentiment_score'],
                 item['sentiment_label'],
-                item['extracted_keywords'],
+                item['extracted_keyword'],
                 item['author'],
                 item['created_at'],
                 item['score'],
@@ -586,41 +590,33 @@ dag = DAG(
 )
 
 
-
-# 1단계: 모든 기술 키워드 세팅
-set_all_tech_keywords_task = PythonOperator(
-    task_id='set_all_tech_keywords',
-    python_callable=set_all_tech_keywords,
-    dag=dag
-)
-
-# 2단계: 새로운 게시글 ID 수집
+# 1단계: 새로운 게시글 ID 수집
 new_story_ids_task = PythonOperator(
     task_id='get_new_story_ids',
     python_callable=get_new_story_ids,
     dag=dag
 )
 
-# 3단계: 게시글 상세정보 수집
+# 2단계: 게시글 상세정보 수집
 story_detail_task = PythonOperator(
     task_id='get_story_detail',
     python_callable=get_story_detail,
     dag=dag
 )
 
-# 4단계: 기술 게시글 필터링 및 분석
+# 3단계: 기술 게시글 필터링 및 분석
 analysis_task = PythonOperator(
     task_id='process_sentiment_and_keywords',
     python_callable=process_sentiment_and_keywords,
     dag=dag
 )
 
-# 5단계: 데이터베이스에 저장
+# 4단계: 데이터베이스에 저장
 insert_tech_trends_data_task = PythonOperator(
     task_id='insert_tech_trends_data',
     python_callable=insert_tech_trends_data,
     dag=dag
 )
 
-# Task 실행 순서 정의 (1단계 → 2단계 → 3단계 → 4단계 → 5단계)
-set_all_tech_keywords_task >> new_story_ids_task >> story_detail_task >> analysis_task >> insert_tech_trends_data_task
+# Task 실행 순서 정의 (1단계 → 2단계 → 3단계 → 4단계)
+new_story_ids_task >> story_detail_task >> analysis_task >> insert_tech_trends_data_task  
