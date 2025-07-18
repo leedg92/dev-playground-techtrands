@@ -24,9 +24,11 @@ def update_latest_keywords():
         'Accept': 'application/vnd.github+json'
     }
     today = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
+    # today = '2023-01-01'
     print(f"🔍 최신 키워드 업데이트 시작: {today}")
 
     try:
+        
         conn = connect(
             host=os.environ['HOST'],
             database=os.environ['DATABASE'],
@@ -42,17 +44,25 @@ def update_latest_keywords():
         success_list = []
         saved_count = 0
 
-        select_query = """
-        SELECT keyword FROM tech_trends.tech_dictionary
-        """
-        cur.execute(select_query)
-        all_tech_keywords = cur.fetchall()
+        # DB에서 가져와서 사용하는 방식
+        # select_query = """
+        # SELECT keyword FROM tech_trends.tech_dictionary
+        # """
+        # cur.execute(select_query)
+        # all_tech_keywords = cur.fetchall()
+
+        # 하드코딩 방식(이게 더 낫나..)
+        all_tech_keywords = ['framework', 'language']
         
         for idx, keyword in enumerate(all_tech_keywords):
-            topic_keyword = keyword[0].lower()
-            
+            # DB에서 가져와서 사용하는 방식
+            # topic_keyword = keyword[0].lower()
+
+            # 하드코딩 방식(이게 더 낫나..)
+            topic_keyword = keyword.lower()
+
             # URL 로그 - 항상 출력
-            api_url = f'https://api.github.com/search/repositories?q=topic:{topic_keyword}+stars:>10000+pushed:>{today}'
+            api_url = f'https://api.github.com/search/repositories?q={topic_keyword if topic_keyword == "" else "topic:"+topic_keyword}+stars:>10000+pushed:>{today}'
             print(f"[{idx+1}/{len(all_tech_keywords)}] 🌐 API 호출: {api_url}")
             
             try:
@@ -79,6 +89,9 @@ def update_latest_keywords():
                         # DB 저장
                         saved_count = 0
                         for new_keyword in topic_keyword_list:
+                            # 하이픈이 포함된 키워드는 제외(예: python-sdk)
+                            if '-' in new_keyword:
+                                continue
                             insert_query = """
                             INSERT INTO tech_trends.tech_dictionary (keyword, category) VALUES (%s, 'concept')
                             ON CONFLICT (keyword) DO NOTHING

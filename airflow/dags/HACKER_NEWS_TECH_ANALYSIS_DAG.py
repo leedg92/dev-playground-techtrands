@@ -285,11 +285,11 @@ def analyze_sentiment(text):
     # compound 점수를 기준으로 감성 라벨 분류
     compound = sentiment_scores['compound']
     if compound >= 0.05:      # 긍정적
-        sentiment_label = 'positive'
+        sentiment_label = '긍정적'
     elif compound <= -0.05:   # 부정적
-        sentiment_label = 'negative'
+        sentiment_label = '부정적'
     else:                     # 중립적
-        sentiment_label = 'neutral'
+        sentiment_label = '중립적'
     
     return {
         'label': sentiment_label,
