@@ -9,6 +9,7 @@ ELK 스택과 자연어 처리 기술을 결합해 개발자들이 실제로 주
 
 ### 주요 특징
 
+- 📕 **Github 토픽 기반 사전 구축** - zero shot 분류기를 활용한 Github API api 최신 기술 키워드 수집/저장
 - 🔄 **실시간 데이터 수집** - HackerNews API를 통한 자동화된 데이터 수집
 - 🧠 **지능형 키워드 추출** - spaCy + TF-IDF 하이브리드 방식으로 정확한 기술 키워드 발견
 - 💭 **감성분석** - VADER를 활용한 기술별 커뮤니티 반응 분석
@@ -24,6 +25,7 @@ ELK 스택과 자연어 처리 기술을 결합해 개발자들이 실제로 주
 - **Database**: PostgreSQL 17.5
 
 ### Natural Language Processing
+- **Keyword Classification**: zero-shot-classfication
 - **Keyword Extraction**: spaCy + scikit-learn TF-IDF (Hybrid)
 - **Sentiment Analysis**: VADER Sentiment
 - **Text Processing**: English-optimized pipeline

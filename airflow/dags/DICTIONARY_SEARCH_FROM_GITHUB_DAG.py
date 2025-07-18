@@ -4,6 +4,8 @@ from airflow.models import Variable
 
 from datetime import datetime, timedelta
 
+# from transformers import pipeline
+
 import requests
 import json
 import concurrent.futures
@@ -18,24 +20,26 @@ from psycopg2.extras import execute_values
 from psycopg2.extensions import adapt
 from psycopg2.extensions import register_adapter
 
+
+# 최신 키워드 업데이트
 def update_latest_keywords():
-    headers = {
-        'Authorization': f'Bearer {os.environ["GITHUB_TOKEN"]}',
-        'Accept': 'application/vnd.github+json'
-    }
+    # 파이프라인 생성
+    # classifier = pipeline(
+    #         "zero-shot-classification",
+    #         model="facebook/bart-large-mnli"
+    # )
+    # 라벨 정의
+    # labels = set_labels()
+    # tech_labels = set_tech_labels()
+
+    headers = set_headers()
     today = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
     # today = '2023-01-01'
     print(f"🔍 최신 키워드 업데이트 시작: {today}")
 
     try:
         
-        conn = connect(
-            host=os.environ['HOST'],
-            database=os.environ['DATABASE'],
-            user=os.environ['USER'], 
-            password=os.environ['PASSWORD'],
-            port=os.environ['PORT']
-        )
+        conn = set_conn()
         print("✅ DB 연결 성공!")
         
         cur = conn.cursor()
@@ -44,15 +48,11 @@ def update_latest_keywords():
         success_list = []
         saved_count = 0
 
-        # DB에서 가져와서 사용하는 방식
-        # select_query = """
-        # SELECT keyword FROM tech_trends.tech_dictionary
-        # """
-        # cur.execute(select_query)
-        # all_tech_keywords = cur.fetchall()
+        # DB에서 가져와서 사용하는 방식(zero-shot 분류기 메모리 이슈 해결(서버용 pc에 탑재)되면 이걸로 전환)
+        # all_tech_keywords = get_tech_keywords_from_db(cur)
 
         # 하드코딩 방식(이게 더 낫나..)
-        all_tech_keywords = ['framework', 'language']
+        all_tech_keywords = get_tech_keywords_from_predefined()
         
         for idx, keyword in enumerate(all_tech_keywords):
             # DB에서 가져와서 사용하는 방식
@@ -84,19 +84,20 @@ def update_latest_keywords():
                         for repo in topic_keyword_data['items']:
                             if repo['name']:
                                 repo_name = repo['name'].lower()
+                                # 하이픈이 포함된 키워드는 제외(예: python-sdk)
+                                if '-' in repo_name:
+                                    continue
+                                # ai 키워드 제외...너무 많이 나온다..
+                                if 'ai' == repo_name:
+                                    continue
+
                                 topic_keyword_list.append(repo_name)
                         
                         # DB 저장
                         saved_count = 0
                         for new_keyword in topic_keyword_list:
-                            # 하이픈이 포함된 키워드는 제외(예: python-sdk)
-                            if '-' in new_keyword:
-                                continue
-                            insert_query = """
-                            INSERT INTO tech_trends.tech_dictionary (keyword, category) VALUES (%s, 'concept')
-                            ON CONFLICT (keyword) DO NOTHING
-                            """
-                            cur.execute(insert_query, (new_keyword,))
+                            cur = save_tech_keywords(cur, new_keyword)
+                            
                             if cur.rowcount > 0:  # 실제로 삽입된 경우
                                 saved_count += 1
                         
@@ -154,3 +155,72 @@ update_latest_keywords_task = PythonOperator(
     python_callable=update_latest_keywords,
     dag=dag
 )
+
+
+# 라벨 설정
+def set_labels():
+    return [
+        "software development and programming",
+        "technology and engineering", 
+        "developer tools and infrastructure",
+        "political and social issues",
+        "entertainment and media",
+        "business and finance",
+        "personal and lifestyle"
+    ]
+
+# 기술 라벨 설정
+def set_tech_labels():
+    return [
+        "software development and programming",
+        "technology and engineering", 
+        "developer tools and infrastructure",
+    ]
+
+# 헤더 설정
+def set_headers():
+    return {
+        'Authorization': f'Bearer {os.environ["GITHUB_TOKEN"]}',
+        'Accept': 'application/vnd.github+json'
+    }
+
+# DB 연결
+def set_conn():
+
+    return connect(
+        host=os.environ['HOST'],
+        database=os.environ['DATABASE'],
+        user=os.environ['USER'], 
+        password=os.environ['PASSWORD'],
+        port=os.environ['PORT']
+    )
+
+# DB에서 키워드 가져오기
+def get_tech_keywords_from_db(cur):
+    select_query = """
+    SELECT keyword FROM tech_trends.tech_dictionary
+    """
+    cur.execute(select_query)
+    all_tech_keywords = cur.fetchall()
+
+    return all_tech_keywords
+
+# 하드코딩 방식으로 키워드 가져오기
+def get_tech_keywords_from_predefined():
+    return ['framework', 'language']
+
+# 키워드 저장
+def save_tech_keywords(cur, new_keyword):
+    insert_query = """
+    INSERT INTO tech_trends.tech_dictionary (keyword, category) VALUES (%s, 'concept')
+    ON CONFLICT (keyword) DO NOTHING
+    """
+    cur.execute(insert_query, (new_keyword,))
+    return cur
+
+# 기술 키워드 판별
+# def check_tech_keyword(repo_name, classifier, tech_labels):
+#     result = classifier(repo_name, tech_labels)
+#     top_label = result['labels'][0]
+#     top_score = result['scores'][0]
+#     return top_label in tech_labels and top_score > 0.5

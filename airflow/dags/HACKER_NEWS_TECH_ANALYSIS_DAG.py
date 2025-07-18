@@ -141,8 +141,8 @@ def get_story_detail(**context):
     new_story_ids = context['ti'].xcom_pull(task_ids='get_new_story_ids')
     stories_data = []  # XCom으로 전달할 데이터 리스트
     
-    # 최대 10개 게시글만 처리 (테스트용 제한)
-    for i in new_story_ids:
+    # 최대 20개 게시글만 처리 (테스트용 제한)
+    for i in new_story_ids[:20]:
         # 개별 게시글 상세정보 API 호출
         response = requests.get(f'https://hacker-news.firebaseio.com/v0/item/{i}.json')
         story_data = response.json()

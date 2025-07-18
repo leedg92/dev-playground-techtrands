@@ -20,3 +20,8 @@ numpy>=1.24.0,<1.27.0
 # HTTP 요청
 requests>=2.31.0
 
+# transformers 
+transformers==4.31.0
+
+# 머신러닝 프레임워크(노트북 메모리 이슈로 텐서플로우 안쓰는 가벼운 앱으로 전환;;)
+# tensorflow[and-cuda]
