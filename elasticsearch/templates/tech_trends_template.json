@@ -1,0 +1,44 @@
+{
+    "index_patterns": ["tech_trends_items*"],
+    "template": {
+      "settings": {
+        "number_of_shards": 1,
+        "number_of_replicas": 0,
+        "analysis": {
+          "analyzer": {
+            "korean_text": {
+              "type": "custom",
+              "tokenizer": "standard",
+              "filter": ["lowercase", "stop"]
+            }
+          }
+        }
+      },
+      "mappings": {
+        "properties": {
+          "id": { "type": "integer" },
+          "item_type": { "type": "keyword" },
+          "text_content": {
+            "type": "text",
+            "analyzer": "korean_text",
+            "fields": {
+              "keyword": { "type": "keyword", "ignore_above": 256 }
+            }
+          },
+          "sentiment_score": { "type": "float" },
+          "sentiment_label": { "type": "keyword" },
+          "sentiment_category": { "type": "keyword" },
+          "extracted_keywords": {
+            "type": "keyword"
+          },
+          "author": { "type": "keyword" },
+          "created_at": { "type": "date" },
+          "score": { "type": "integer" },
+          "parent_id": { "type": "long" },
+          "root_story_id": { "type": "long" },
+          "content_type": { "type": "keyword" },
+          "text_length": { "type": "integer" }
+        }
+      }
+    }
+  }
