@@ -23,6 +23,7 @@ from psycopg2.extensions import register_adapter
 
 # 최신 키워드 업데이트
 def update_latest_keywords():
+
     # 파이프라인 생성
     # classifier = pipeline(
     #         "zero-shot-classification",
@@ -180,7 +181,7 @@ def set_tech_labels():
 # 헤더 설정
 def set_headers():
     return {
-        'Authorization': f'Bearer {os.environ["GITHUB_TOKEN"]}',
+        'Authorization': f'{os.environ["GITHUB_TOKEN"]}',
         'Accept': 'application/vnd.github+json'
     }
 

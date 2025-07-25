@@ -1,3 +1,5 @@
+\c tech_trends;
+
 -- 초기 해커뉴스 감성분석 데이터 삽입
 INSERT INTO tech_trends.tech_trends_items (id,item_type,text_content,sentiment_score,sentiment_label,extracted_keyword,author,created_at,score,parent_id,root_story_id) VALUES
 	 (44586233,'story','Scale AI cuts 14% of workforce after Meta investment, hiring of founder Wang',-0.296,'negative','ai','itg','2025-07-16 20:32:12.123',1,NULL,0),
